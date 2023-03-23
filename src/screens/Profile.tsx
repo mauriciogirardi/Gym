@@ -5,21 +5,61 @@ import {
   Icon,
   ScrollView,
   Text,
+  useToast,
   VStack,
 } from "native-base";
 import { TouchableOpacity } from "react-native";
+import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 
 import { ScreenHeader } from "@components/ScreenHeader";
 import { UserPhoto } from "@components/UserPhoto";
 import { Button } from "@components/Button";
 import { Input } from "@components/Input";
-import { useState } from "react";
 
 export function Profile() {
+  const toast = useToast();
   const [showPasswords, setShowPasswords] = useState(false);
+  const [loadingPhoto, setLoadingPhoto] = useState(false);
+  const [userPhoto, setUserPhoto] = useState(
+    "https://github.com/mauriciogirardi.png"
+  );
 
   const handleShowPassword = () => setShowPasswords((prevState) => !prevState);
+
+  const handleUserPhotoSelected = async () => {
+    try {
+      setLoadingPhoto(true);
+      const { canceled, assets } = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+        aspect: [4, 4],
+        allowsEditing: true,
+      });
+
+      if (canceled || !assets[0].uri) return;
+
+      const photoUri = assets[0].uri;
+      const photoInfo = await FileSystem.getInfoAsync(photoUri);
+      const hasImgFiveMb = photoInfo.size && photoInfo.size / 1024 / 1024 > 5;
+
+      if (hasImgFiveMb) {
+        return toast.show({
+          title: "Essa imagem é muito grande. Escolha uma de até 5MB!",
+          placement: "top",
+          bg: "red.500",
+        });
+      }
+
+      setUserPhoto(photoUri);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingPhoto(false);
+    }
+  };
 
   return (
     <VStack flex={1}>
@@ -33,14 +73,14 @@ export function Profile() {
         <Center>
           <UserPhoto
             size={24}
-            source={{ uri: "https://github.com/mauriciogirardi.png" }}
+            source={{ uri: userPhoto }}
             alt="Mauricio"
             resizeMode="center"
             mt={6}
-            isLoading={false}
+            isLoading={loadingPhoto}
             skeletonStyles={{ mt: 6 }}
           />
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleUserPhotoSelected}>
             <Text
               color="green.500"
               fontWeight="bold"
