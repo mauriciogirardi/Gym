@@ -25,7 +25,9 @@ export function HomeHeader() {
         <Text color="gray.100" fontSize="md">
           Olá
         </Text>
-        <Heading color="gray.100">Mauricio</Heading>
+        <Heading fontFamily="heading" color="gray.100">
+          Mauricio
+        </Heading>
       </VStack>
 
       <TouchableOpacity>

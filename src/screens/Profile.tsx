@@ -107,7 +107,7 @@ export function Profile() {
           alignItems="center"
           justifyContent="space-between"
         >
-          <Heading color="gray.300" fontSize="md">
+          <Heading color="gray.300" fontSize="md" fontFamily="heading">
             Alterar senha
           </Heading>
 
