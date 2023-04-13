@@ -1,18 +1,22 @@
-import { FlatList, Heading, HStack, Text, VStack } from "native-base";
-import { useState } from "react";
+import { FlatList, Heading, HStack, Text, useToast, VStack } from "native-base";
+import { useCallback, useEffect, useState } from "react";
 
 import { HomeHeader } from "@components/HomeHeader";
 import { Group } from "@components/Group";
 import { ExerciseCard } from "@components/ExerciseCard";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { AppNavigatorRoutesProps } from "@routes/app.routes";
-
-const groupsData = ["Ombros", "Bíceps", "Tríceps", "Costas", "Pernas"];
+import { AppError } from "@utils/AppError";
+import { api } from "@services/axios";
+import { ExerciseDTO } from "@dtos/ExerciesDTO";
+import { Loading } from "@components/Loading";
 
 export function Home() {
+  const toast = useToast();
   const [groupSelected, setGroupSelected] = useState("");
-  const [groups, setGroups] = useState(groupsData);
-  const [exercises, setExercises] = useState(["Ombros", "Bíceps", "Tríceps"]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [groups, setGroups] = useState<string[]>([]);
+  const [exercises, setExercises] = useState<ExerciseDTO[]>([]);
   const navigation = useNavigation<AppNavigatorRoutesProps>();
 
   const handleGroupSelected = (group: string) => setGroupSelected(group);
@@ -20,6 +24,53 @@ export function Home() {
   const handleOpenExerciseDetails = () => {
     navigation.navigate("exercise");
   };
+
+  const fetchGroups = async () => {
+    try {
+      const { data } = await api.get("/groups");
+      setGroups(data);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível carregar os grupos musculares!";
+      toast.show({
+        title,
+        placement: "top",
+        bg: "red.500",
+      });
+    }
+  };
+
+  const fetchExercisesByGroups = async () => {
+    try {
+      setIsLoading(true);
+      const { data } = await api.get(`/exercises/bygroup/${groupSelected}`);
+      setExercises(data);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+      const title = isAppError
+        ? error.message
+        : "Não foi possível carregar os exercícios!";
+      toast.show({
+        title,
+        placement: "top",
+        bg: "red.500",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchExercisesByGroups();
+    }, [groupSelected])
+  );
 
   return (
     <VStack flex={1}>
@@ -53,15 +104,22 @@ export function Home() {
           </Text>
         </HStack>
 
-        <FlatList
-          data={exercises}
-          keyExtractor={(id) => id}
-          renderItem={({ item }) => (
-            <ExerciseCard onPress={handleOpenExerciseDetails} />
-          )}
-          showsVerticalScrollIndicator={false}
-          _contentContainerStyle={{ paddingBottom: 20 }}
-        />
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <FlatList
+            data={exercises}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({ item }) => (
+              <ExerciseCard
+                onPress={handleOpenExerciseDetails}
+                exercise={item}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+            _contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        )}
       </VStack>
     </VStack>
   );
