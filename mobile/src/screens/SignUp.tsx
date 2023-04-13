@@ -7,17 +7,18 @@ import {
   VStack,
   useToast,
 } from "native-base";
-import { useNavigation } from "@react-navigation/native";
 import { Controller, useForm } from "react-hook-form";
+import { useNavigation } from "@react-navigation/native";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 
 import backgroundImg from "@assets/background.png";
 import LogoSvg from "@assets/logo.svg";
-import { Input } from "@components/Input";
-import { Button } from "@components/Button";
-import { api } from "@services/axios";
 import { AppError } from "@utils/AppError";
+import { useAuth } from "@hooks/useAuth";
+import { Button } from "@components/Button";
+import { Input } from "@components/Input";
+import { api } from "@services/axios";
 
 type FormSignUp = {
   name: string;
@@ -30,7 +31,7 @@ const formSignUpSchema = yup.object({
   name: yup.string().required("Informe o nome!"),
   email: yup
     .string()
-    .required("Informe o e-amil!")
+    .required("Informe o e-mail!")
     .email("E-mail não é valido!"),
   password: yup
     .string()
@@ -45,6 +46,8 @@ const formSignUpSchema = yup.object({
 export function SignUp() {
   const toast = useToast();
   const navigation = useNavigation();
+  const { signIn } = useAuth();
+
   const {
     control,
     handleSubmit,
@@ -58,15 +61,7 @@ export function SignUp() {
   const handleSignUp = async (data: FormSignUp) => {
     try {
       await api.post("/users", data);
-
-      toast.show({
-        title:
-          "Usuário cadastrado com sucesso. Você já pode fazer login na aplicação!",
-        placement: "top",
-        bg: "green.500",
-      });
-
-      navigation.goBack();
+      await signIn({ email: data.email, password: data.password });
     } catch (error) {
       const isAppError = error instanceof AppError;
       const title = isAppError
@@ -166,7 +161,7 @@ export function SignUp() {
             title="Criar e acessar"
             mt={2}
             onPress={handleSubmit(handleSignUp)}
-            isDisabled={isSubmitting}
+            isLoading={isSubmitting}
           />
 
           <Button

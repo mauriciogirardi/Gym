@@ -1,8 +1,10 @@
-import { Image, IImageProps, Skeleton } from "native-base";
+import { Image, IImageProps, Skeleton, Icon, Box } from "native-base";
+import { MaterialIcons } from "@expo/vector-icons";
 
 type UserPhotoProps = IImageProps & {
   size: number;
   isLoading?: boolean;
+  hasAvatar?: boolean;
   skeletonStyles?: {
     mt?: number;
     mb?: number;
@@ -13,6 +15,7 @@ export function UserPhoto({
   size,
   isLoading = false,
   skeletonStyles,
+  hasAvatar = false,
   ...rest
 }: UserPhotoProps) {
   return (
@@ -26,7 +29,7 @@ export function UserPhoto({
           endColor="gray.600"
           {...skeletonStyles}
         />
-      ) : (
+      ) : hasAvatar ? (
         <Image
           h={size}
           w={size}
@@ -35,6 +38,20 @@ export function UserPhoto({
           borderColor="gray.400"
           {...rest}
         />
+      ) : (
+        <Box
+          w={size}
+          h={size}
+          borderColor="gray.400"
+          borderWidth={2}
+          rounded="full"
+          alignItems="center"
+          mr={2}
+          justifyContent="center"
+          bg="gray.700"
+        >
+          <Icon as={MaterialIcons} name="person" size={10} />
+        </Box>
       )}
     </>
   );

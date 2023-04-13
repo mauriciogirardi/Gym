@@ -79,6 +79,7 @@ export function Profile() {
             mt={6}
             isLoading={loadingPhoto}
             skeletonStyles={{ mt: 6 }}
+            hasAvatar={!!userPhoto}
           />
           <TouchableOpacity onPress={handleUserPhotoSelected}>
             <Text

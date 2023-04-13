@@ -1,55 +1,55 @@
 import {
   createBottomTabNavigator,
   BottomTabNavigationProp,
-} from '@react-navigation/bottom-tabs'
+} from "@react-navigation/bottom-tabs";
 
-import { Exercise } from '@screens/Exercise'
-import { Profile } from '@screens/Profile'
-import { History } from '@screens/History'
-import { Home } from '@screens/Home'
+import { Exercise } from "@screens/Exercise";
+import { Profile } from "@screens/Profile";
+import { History } from "@screens/History";
+import { Home } from "@screens/Home";
 
-import HomeSvg from '@assets/home.svg'
-import HistorySvg from '@assets/history.svg'
-import ProfileSvg from '@assets/profile.svg'
-import { useTheme } from 'native-base'
-import { SvgProps } from 'react-native-svg'
-import { Platform } from 'react-native'
+import HomeSvg from "@assets/home.svg";
+import HistorySvg from "@assets/history.svg";
+import ProfileSvg from "@assets/profile.svg";
+import { useTheme } from "native-base";
+import { SvgProps } from "react-native-svg";
+import { Platform } from "react-native";
 
 type AppRouteTypes = {
-  home: undefined
-  history: undefined
-  profile: undefined
-  exercise: undefined
-}
+  home: undefined;
+  history: undefined;
+  profile: undefined;
+  exercise: undefined;
+};
 
 type RenderIconProps = {
-  icon: React.FC<SvgProps>
-  color: string
-}
+  icon: React.FC<SvgProps>;
+  color: string;
+};
 
-export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRouteTypes>
+export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRouteTypes>;
 
-const { Navigator, Screen } = createBottomTabNavigator<AppRouteTypes>()
+const { Navigator, Screen } = createBottomTabNavigator<AppRouteTypes>();
 
 export function AppRoutes() {
-  const { sizes, colors } = useTheme()
+  const { sizes, colors } = useTheme();
 
   const renderIcon = ({ icon: Icon, color }: RenderIconProps) => {
-    const iconSize = sizes[7]
-    return <Icon fill={color} width={iconSize} height={iconSize} />
-  }
+    const iconSize = sizes[7];
+    return <Icon fill={color} width={iconSize} height={iconSize} />;
+  };
 
   return (
     <Navigator
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarActiveTintColor: colors.green['500'],
-        tabBarInactiveTintColor: colors.gray['300'],
+        tabBarActiveTintColor: colors.green["500"],
+        tabBarInactiveTintColor: colors.gray["300"],
         tabBarStyle: {
-          backgroundColor: colors.gray['600'],
+          backgroundColor: colors.gray["600"],
           borderTopWidth: 0,
-          height: Platform.OS === 'android' ? 'auto' : 96,
+          height: Platform.OS === "android" ? "auto" : 96,
           paddingBottom: sizes[8],
           paddingTop: sizes[8],
         },
@@ -82,5 +82,5 @@ export function AppRoutes() {
         options={{ tabBarButton: () => null }}
       />
     </Navigator>
-  )
+  );
 }
