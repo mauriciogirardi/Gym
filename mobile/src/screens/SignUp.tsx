@@ -12,13 +12,14 @@ import { useNavigation } from "@react-navigation/native";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 
-import backgroundImg from "@assets/background.png";
-import LogoSvg from "@assets/logo.svg";
-import { AppError } from "@utils/AppError";
 import { useAuth } from "@hooks/useAuth";
 import { Button } from "@components/Button";
 import { Input } from "@components/Input";
 import { api } from "@services/axios";
+
+import backgroundImg from "@assets/background.png";
+import LogoSvg from "@assets/logo.svg";
+import { messageError } from "@utils/messageError";
 
 type FormSignUp = {
   name: string;
@@ -63,15 +64,10 @@ export function SignUp() {
       await api.post("/users", data);
       await signIn({ email: data.email, password: data.password });
     } catch (error) {
-      const isAppError = error instanceof AppError;
-      const title = isAppError
-        ? error.message
-        : "Não foi possível criar a conta. Tente mais tarde!";
-
-      return toast.show({
-        title,
-        placement: "top",
-        bg: "red.500",
+      messageError({
+        toast,
+        error,
+        message: "Não foi possível criar a conta. Tente mais tarde!",
       });
     }
   };

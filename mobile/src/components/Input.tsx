@@ -4,7 +4,7 @@ import {
   FormControl,
 } from "native-base";
 
-interface InputProps extends IInputProps {
+export interface InputProps extends IInputProps {
   errorMessage?: string | null;
 }
 

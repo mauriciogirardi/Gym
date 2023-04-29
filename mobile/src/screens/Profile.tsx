@@ -8,24 +8,103 @@ import {
   useToast,
   VStack,
 } from "native-base";
+import { Controller, useForm } from "react-hook-form";
 import { TouchableOpacity } from "react-native";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useState } from "react";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import * as yup from "yup";
 
 import { ScreenHeader } from "@components/ScreenHeader";
+import { messageError } from "@utils/messageError";
 import { UserPhoto } from "@components/UserPhoto";
+import { useAuth } from "@hooks/useAuth";
 import { Button } from "@components/Button";
 import { Input } from "@components/Input";
+import { api } from "@services/axios";
+
+interface FormDataProps {
+  name: string;
+  email: string;
+  password: string;
+  old_password: string;
+  confirm_password: string;
+}
+
+const profileSchema = yup.object({
+  name: yup.string().required("Informe o nome!"),
+  password: yup
+    .string()
+    .min(6, "A senha deve ter pelo menos 6 dígitos")
+    .nullable()
+    .transform((value) => (!!value ? value : null)),
+  confirm_password: yup
+    .string()
+    .nullable()
+    .when("password", {
+      is: (field: any) => field,
+      then: () =>
+        yup
+          .string()
+          .nullable()
+          .required("Informe a confirmação da senha!")
+          .oneOf(
+            [yup.ref("password")],
+            "A confirmação da senha deve ser igual!"
+          )
+          .transform((value) => (!!value ? value : null)),
+    }),
+});
 
 export function Profile() {
+  const { user, updateUserProfile } = useAuth();
   const toast = useToast();
-  const [showPasswords, setShowPasswords] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(true);
   const [loadingPhoto, setLoadingPhoto] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [userPhoto, setUserPhoto] = useState(
     "https://github.com/mauriciogirardi.png"
   );
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormDataProps>({
+    defaultValues: {
+      name: user.name,
+      email: user.email,
+    },
+    resolver: yupResolver(profileSchema),
+  });
+
+  const handleProfileUpdate = async (data: FormDataProps) => {
+    try {
+      setIsFetching(true);
+      const userUpdated = user;
+      userUpdated.name = data.name;
+
+      await api.put("/users", data);
+
+      toast.show({
+        title: "Dados atualizados com sucesso!",
+        placement: "top",
+        bg: "green.700",
+      });
+
+      await updateUserProfile(userUpdated);
+    } catch (error) {
+      messageError({
+        error,
+        toast,
+        message: "Não foi possível atualizar os dados!",
+      });
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const handleShowPassword = () => setShowPasswords((prevState) => !prevState);
 
@@ -94,12 +173,32 @@ export function Profile() {
           </TouchableOpacity>
         </Center>
 
-        <Input bg="gray.600" placeholder="Nome" />
-        <Input
-          bg="gray.600"
-          placeholder="E-mail"
-          isDisabled
-          value="maurigirarde@yahoo.com.br"
+        <Controller
+          control={control}
+          name="name"
+          render={({ field: { value, onChange } }) => (
+            <Input
+              bg="gray.600"
+              value={value}
+              onChangeText={onChange}
+              errorMessage={errors.name?.message}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { value, onChange } }) => (
+            <Input
+              bg="gray.600"
+              value={value}
+              onChangeText={onChange}
+              errorMessage={errors.email?.message}
+              isDisabled
+              placeholder="E-mail"
+            />
+          )}
         />
 
         <HStack
@@ -132,22 +231,55 @@ export function Profile() {
             )}
           </TouchableOpacity>
         </HStack>
-        <Input
-          bg="gray.600"
-          placeholder="Senha antiga"
-          secureTextEntry={showPasswords}
+
+        <Controller
+          control={control}
+          name="old_password"
+          render={({ field: { onChange } }) => (
+            <Input
+              bg="gray.600"
+              secureTextEntry={showPasswords}
+              onChangeText={onChange}
+              errorMessage={errors.old_password?.message}
+              placeholder="Senha antiga"
+            />
+          )}
         />
-        <Input
-          bg="gray.600"
-          placeholder="Nova senha"
-          secureTextEntry={showPasswords}
+
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange } }) => (
+            <Input
+              bg="gray.600"
+              secureTextEntry={showPasswords}
+              onChangeText={onChange}
+              errorMessage={errors.password?.message}
+              placeholder="Nova senha"
+            />
+          )}
         />
-        <Input
-          bg="gray.600"
-          placeholder="Confirme a nova senha"
-          secureTextEntry={showPasswords}
+
+        <Controller
+          control={control}
+          name="confirm_password"
+          render={({ field: { onChange } }) => (
+            <Input
+              bg="gray.600"
+              secureTextEntry={showPasswords}
+              onChangeText={onChange}
+              errorMessage={errors.confirm_password?.message}
+              placeholder="Confirmação da senha"
+            />
+          )}
         />
-        <Button title="Atualiza" mt={4} />
+
+        <Button
+          title="Atualiza"
+          mt={4}
+          onPress={handleSubmit(handleProfileUpdate)}
+          isLoading={isFetching}
+        />
       </ScrollView>
     </VStack>
   );

@@ -1,15 +1,15 @@
 import { FlatList, Heading, HStack, Text, useToast, VStack } from "native-base";
 import { useCallback, useEffect, useState } from "react";
-
-import { HomeHeader } from "@components/HomeHeader";
-import { Group } from "@components/Group";
-import { ExerciseCard } from "@components/ExerciseCard";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+
 import { AppNavigatorRoutesProps } from "@routes/app.routes";
-import { AppError } from "@utils/AppError";
-import { api } from "@services/axios";
+import { ExerciseCard } from "@components/ExerciseCard";
 import { ExerciseDTO } from "@dtos/ExerciesDTO";
+import { HomeHeader } from "@components/HomeHeader";
 import { Loading } from "@components/Loading";
+import { Group } from "@components/Group";
+import { api } from "@services/axios";
+import { messageError } from "@utils/messageError";
 
 export function Home() {
   const toast = useToast();
@@ -21,8 +21,8 @@ export function Home() {
 
   const handleGroupSelected = (group: string) => setGroupSelected(group);
 
-  const handleOpenExerciseDetails = () => {
-    navigation.navigate("exercise");
+  const handleOpenExerciseDetails = (exerciseId: string) => {
+    navigation.navigate("exercise", { exerciseId });
   };
 
   const fetchGroups = async () => {
@@ -30,14 +30,10 @@ export function Home() {
       const { data } = await api.get("/groups");
       setGroups(data);
     } catch (error) {
-      const isAppError = error instanceof AppError;
-      const title = isAppError
-        ? error.message
-        : "Não foi possível carregar os grupos musculares!";
-      toast.show({
-        title,
-        placement: "top",
-        bg: "red.500",
+      messageError({
+        toast,
+        error,
+        message: "Não foi possível carregar os grupos musculares!",
       });
     }
   };
@@ -48,14 +44,10 @@ export function Home() {
       const { data } = await api.get(`/exercises/bygroup/${groupSelected}`);
       setExercises(data);
     } catch (error) {
-      const isAppError = error instanceof AppError;
-      const title = isAppError
-        ? error.message
-        : "Não foi possível carregar os exercícios!";
-      toast.show({
-        title,
-        placement: "top",
-        bg: "red.500",
+      messageError({
+        toast,
+        error,
+        message: "Não foi possível carregar os exercícios!",
       });
     } finally {
       setIsLoading(false);
@@ -104,6 +96,14 @@ export function Home() {
           </Text>
         </HStack>
 
+        {!groupSelected && (
+          <VStack flex={1} alignItems="center" justifyContent="center">
+            <Heading color="gray.300" fontSize="lg" fontFamily="heading">
+              Escolha um grupo!
+            </Heading>
+          </VStack>
+        )}
+
         {isLoading ? (
           <Loading />
         ) : (
@@ -112,7 +112,7 @@ export function Home() {
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => (
               <ExerciseCard
-                onPress={handleOpenExerciseDetails}
+                onPress={() => handleOpenExerciseDetails(String(item.id))}
                 exercise={item}
               />
             )}

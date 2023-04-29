@@ -2,9 +2,9 @@ import { Heading, HStack, Text, VStack, Icon, useToast } from "native-base";
 import { TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
+import { messageError } from "@utils/messageError";
 import { UserPhoto } from "./UserPhoto";
 import { useAuth } from "@hooks/useAuth";
-import { AppError } from "@utils/AppError";
 
 export function HomeHeader() {
   const toast = useToast();
@@ -16,15 +16,10 @@ export function HomeHeader() {
     try {
       await signOut();
     } catch (error) {
-      const isAppError = error instanceof AppError;
-      const title = isAppError
-        ? error.message
-        : "Ocorreu um erro ao deslogar da aplicação, tente mais tarde!";
-
-      return toast.show({
-        title,
-        placement: "top",
-        bg: "red.500",
+      messageError({
+        toast,
+        error,
+        message: "Ocorreu um erro ao deslogar da aplicação, tente mais tarde!",
       });
     }
   };

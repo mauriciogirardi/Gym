@@ -1,5 +1,4 @@
 import {
-  Box,
   Center,
   Heading,
   Image,
@@ -8,18 +7,19 @@ import {
   VStack,
   useToast,
 } from "native-base";
-import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useNavigation } from "@react-navigation/native";
 import * as yup from "yup";
+
+import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
+import { useAuth } from "@hooks/useAuth";
+import { Button } from "@components/Button";
+import { Input } from "@components/Input";
 
 import backgroundImg from "@assets/background.png";
 import LogoSvg from "@assets/logo.svg";
-import { Input } from "@components/Input";
-import { Button } from "@components/Button";
-import { useNavigation } from "@react-navigation/native";
-import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
-import { useAuth } from "@hooks/useAuth";
-import { AppError } from "@utils/AppError";
+import { messageError } from "@utils/messageError";
 
 type FormSignIn = {
   email: string;
@@ -53,15 +53,10 @@ export function SignIn() {
     try {
       await signIn({ email, password });
     } catch (error) {
-      const isAppError = error instanceof AppError;
-      const title = isAppError
-        ? error.message
-        : "Não foi possível fazer o login. Tente novamente mais tarde!";
-
-      return toast.show({
-        title,
-        placement: "top",
-        bg: "red.500",
+      messageError({
+        toast,
+        error,
+        message: "Não foi possível fazer o login. Tente novamente mais tarde!",
       });
     }
   };

@@ -19,7 +19,7 @@ type AppRouteTypes = {
   home: undefined;
   history: undefined;
   profile: undefined;
-  exercise: undefined;
+  exercise: { exerciseId: string };
 };
 
 type RenderIconProps = {
