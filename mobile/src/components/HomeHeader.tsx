@@ -5,6 +5,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { messageError } from "@utils/messageError";
 import { UserPhoto } from "./UserPhoto";
 import { useAuth } from "@hooks/useAuth";
+import { api } from "@services/axios";
 
 export function HomeHeader() {
   const toast = useToast();
@@ -35,7 +36,7 @@ export function HomeHeader() {
     >
       <UserPhoto
         size={16}
-        source={{ uri: user.avatar }}
+        source={{ uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }}
         alt={user.name}
         hasAvatar={!!user.avatar}
         mr={4}

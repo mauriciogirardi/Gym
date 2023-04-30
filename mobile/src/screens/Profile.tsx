@@ -20,6 +20,7 @@ import * as yup from "yup";
 import { ScreenHeader } from "@components/ScreenHeader";
 import { messageError } from "@utils/messageError";
 import { UserPhoto } from "@components/UserPhoto";
+import { message } from "@utils/message";
 import { useAuth } from "@hooks/useAuth";
 import { Button } from "@components/Button";
 import { Input } from "@components/Input";
@@ -64,9 +65,6 @@ export function Profile() {
   const [showPasswords, setShowPasswords] = useState(true);
   const [loadingPhoto, setLoadingPhoto] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
-  const [userPhoto, setUserPhoto] = useState(
-    "https://github.com/mauriciogirardi.png"
-  );
 
   const {
     control,
@@ -120,21 +118,45 @@ export function Profile() {
 
       if (canceled || !assets[0].uri) return;
 
-      const photoUri = assets[0].uri;
+      const photoSelected = assets[0];
+
+      const photoUri = photoSelected.uri;
       const photoInfo = await FileSystem.getInfoAsync(photoUri);
       const hasImgFiveMb = photoInfo.size && photoInfo.size / 1024 / 1024 > 5;
 
       if (hasImgFiveMb) {
-        return toast.show({
+        return message({
           title: "Essa imagem é muito grande. Escolha uma de até 5MB!",
-          placement: "top",
-          bg: "red.500",
+          type: "error",
+          toast,
         });
       }
 
-      setUserPhoto(photoUri);
+      const fileExtension = photoSelected.uri.split(".").pop();
+      const photoFile = {
+        name: `${user.name}.${fileExtension}`.toLowerCase(),
+        uri: photoSelected.uri,
+        type: `${photoSelected.type}/${fileExtension}`,
+      } as any;
+
+      const userPhotoUploadForm = new FormData();
+      userPhotoUploadForm.append("avatar", photoFile);
+
+      const { data } = await api.patch("/users/avatar", userPhotoUploadForm, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const userUpdated = user;
+      userUpdated.avatar = data.avatar;
+
+      await updateUserProfile(userUpdated);
+
+      message({ title: "Foto atualizada!", toast });
     } catch (error) {
-      console.error(error);
+      console.log(error);
+      messageError({ error, toast, message: "Erro ao salvar imagem!" });
     } finally {
       setLoadingPhoto(false);
     }
@@ -152,13 +174,13 @@ export function Profile() {
         <Center>
           <UserPhoto
             size={24}
-            source={{ uri: userPhoto }}
+            source={{ uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }}
             alt="Mauricio"
             resizeMode="center"
             mt={6}
             isLoading={loadingPhoto}
             skeletonStyles={{ mt: 6 }}
-            hasAvatar={!!userPhoto}
+            hasAvatar={!!user.avatar}
           />
           <TouchableOpacity onPress={handleUserPhotoSelected}>
             <Text
